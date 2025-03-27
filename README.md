@@ -1,6 +1,6 @@
-# uney-chat-mls-group
+# telnet-openmls-demo
 
-The Group chat for Uney Chat using OpenMLS and Telnet protocol
+The Group chat using OpenMLS and Telnet protocol
 
 ## Installation
 
