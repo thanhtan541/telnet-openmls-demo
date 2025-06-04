@@ -144,7 +144,7 @@ fn is_three_byte_iac(byte: u8) -> bool {
 fn parse_line(line: Vec<u8>) -> Option<Item> {
     println!("[Client] sent command in byte {:?}", line);
     // c#pkp == command: publish key package
-    if line.to_vec() == [99, 34, 112, 107, 112] {
+    if line.to_vec() == b"c#pkp" {
         println!("[Client] Publishing its keypackage");
 
         return Some(Item::PublishKeyPackage);
@@ -152,7 +152,7 @@ fn parse_line(line: Vec<u8>) -> Option<Item> {
 
     // c#cgw == command: [c]reate [g]roup [w]ith ids of participants
     // separates by space
-    if line.to_vec()[0..4] == [99, 34, 99, 103] {
+    if line.to_vec()[0..4] == b"c#cgw".to_vec() {
         let curr = &line[5..];
         let mut ids: Vec<u8> = Vec::new();
         for value in curr {
@@ -168,7 +168,7 @@ fn parse_line(line: Vec<u8>) -> Option<Item> {
     }
 
     // c#skd == command: [s]how [k]akacge [d]etails
-    if line.to_vec() == [99, 34, 115, 107, 100] {
+    if line.to_vec() == b"c#skd" {
         println!("[Client] Show keypackage details");
 
         return Some(Item::ShowKPDetails);
