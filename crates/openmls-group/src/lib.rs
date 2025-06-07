@@ -7,12 +7,10 @@
 // Client will be spawned thread
 pub mod accept;
 pub mod client;
-// pub mod group_chat;
-pub mod ext_mls;
 pub mod main_loop;
 pub mod telnet;
 
-use std::fmt::{Display, Pointer};
+use std::fmt::Display;
 
 use main_loop::ToDelivery;
 use rand::Rng;

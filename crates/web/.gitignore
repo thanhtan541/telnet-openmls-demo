@@ -1,0 +1,11 @@
+.DS_Store
+/target
+private*.*
+public*.*
+*.pem
+
+# code report
+clippy.json
+lcov.info
+sonar-project.properties
+/.scannerwork
