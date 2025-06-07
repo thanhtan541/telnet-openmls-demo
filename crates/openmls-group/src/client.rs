@@ -1,7 +1,6 @@
-use std::{collections::HashMap, io, net::SocketAddr};
+use std::{io, net::SocketAddr};
 
 use futures::stream::StreamExt;
-use openmls::prelude::KeyPackageBundle;
 use tokio::{
     io::AsyncWriteExt,
     net::{
@@ -18,18 +17,16 @@ use tokio::{
 };
 use tokio_util::codec::FramedRead;
 
-use crate::{ext_mls::show_key_package_details, ClientId};
 use crate::{
-    ext_mls::{generate_key_package, MemoryProvider},
     main_loop::{ServerHandle, ToDelivery},
     telnet::{Item, TelnetCodec},
+    ClientId,
 };
 
 /// Messages received from the main loop.
 pub enum FromDelivery {
     // Should be decrypted data
     Message(Vec<u8>),
-    SendKeyPackages(HashMap<ClientId, KeyPackageBundle>),
 }
 
 /// This struct is constructed by the accept loop and used as the argument to
@@ -46,7 +43,6 @@ struct ClientData {
     handle: ServerHandle,
     recv: Receiver<FromDelivery>,
     tcp: TcpStream,
-    provider: MemoryProvider,
 }
 
 /// A handle to this actor, used by the server.
@@ -84,14 +80,12 @@ impl Drop for ClientHandle {
 
 pub fn spawn_client(info: ClientInfo) {
     let (send, recv) = channel(64);
-    let provider = MemoryProvider::default();
 
     let data = ClientData {
         id: info.id,
         handle: info.handle.clone(),
         tcp: info.tcp,
         recv,
-        provider,
     };
 
     // This spawns the new task.
@@ -143,7 +137,7 @@ async fn client_loop(mut data: ClientData) -> Result<(), io::Error> {
     let (send, recv) = unbounded_channel();
 
     let ((), ()) = try_join! {
-        tcp_read(data.id, read, data.handle, send, &data.provider),
+        tcp_read(data.id, read, data.handle, send),
         tcp_write(write, data.recv, recv),
     }?;
 
@@ -165,7 +159,6 @@ async fn tcp_read(
     read: ReadHalf<'_>,
     mut handle: ServerHandle,
     to_tcp_write: UnboundedSender<InternalMsg>,
-    provider: &MemoryProvider,
 ) -> Result<(), io::Error> {
     let mut telnet = FramedRead::new(read, TelnetCodec::new());
 
@@ -198,27 +191,10 @@ async fn tcp_read(
                 handle.send(ToDelivery::Message(id, line)).await;
             }
             Item::ShowKPDetails => {
-                show_key_package_details();
+                println!("Todo");
             }
             Item::PublishKeyPackage => {
                 println!("[Client] Publishing key package of client: {}", id);
-                let identity = id.to_string();
-                let kp = generate_key_package(provider, &identity);
-                handle.send(ToDelivery::KeyPackage(id, kp)).await;
-            }
-            Item::CreateGroup(ids) => {
-                println!("[Client] Start to create local group");
-                println!("[Client] Fetching participant's keypackage");
-                // Convert u8 to char to digit to usize
-                let client_ids: Vec<ClientId> = ids
-                    .iter()
-                    .map(|&b| ClientId(char::from(b).to_digit(10).unwrap_or_default() as usize))
-                    .collect();
-                println!("[Client] of ids: {:?}", client_ids);
-
-                handle
-                    .send(ToDelivery::FetchKeyPackage(id, client_ids))
-                    .await;
             }
             item => {
                 return Err(io::Error::new(
@@ -245,13 +221,6 @@ async fn tcp_write(
                 Some(FromDelivery::Message(msg)) => {
                     write.write_all(&msg).await?;
                     write.write_all(&[13, 10]).await?;
-                },
-                Some(FromDelivery::SendKeyPackages(kps)) => {
-                    println!("[Client] Received key package");
-                    for (id, kp) in kps.iter() {
-                        println!("[Client] Key package of client: {}", id);
-                        println!("{:?}", kp);
-                    }
                 },
                 None => {
                     break;

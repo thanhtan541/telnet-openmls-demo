@@ -1,4 +1,3 @@
-use openmls::prelude::KeyPackageBundle;
 use std::{
     collections::HashMap,
     io,
@@ -19,8 +18,6 @@ use crate::{
 pub enum ToDelivery {
     NewClient(ClientHandle),
     Message(ClientId, Vec<u8>),
-    KeyPackage(ClientId, KeyPackageBundle),
-    FetchKeyPackage(ClientId, Vec<ClientId>),
     FatalError(io::Error),
 }
 
@@ -50,21 +47,6 @@ struct Data {
     clients: HashMap<ClientId, ClientHandle>,
 }
 
-// Delivery Service store
-#[derive(Default, Debug)]
-pub struct DSStore {
-    key_packages: HashMap<usize, Vec<KeyPackageBundle>>,
-}
-
-impl DSStore {
-    pub fn add_key_package(&mut self, id: usize, value: KeyPackageBundle) {
-        self.key_packages
-            .entry(id)
-            .or_insert_with(Vec::new)
-            .push(value);
-    }
-}
-
 pub fn spawn_main_loop() -> (ServerHandle, JoinHandle<()>) {
     let (send, recv) = channel(64);
 
@@ -88,7 +70,6 @@ pub fn spawn_main_loop() -> (ServerHandle, JoinHandle<()>) {
 
 async fn main_loop(mut recv: Receiver<ToDelivery>) -> Result<(), io::Error> {
     let mut data = Data::default();
-    let mut ds_store = DSStore::default();
 
     while let Some(msg) = recv.recv().await {
         match msg {
@@ -141,60 +122,6 @@ async fn main_loop(mut recv: Receiver<ToDelivery>) -> Result<(), io::Error> {
                             eprintln!("[Delivery Service] Something went wrong: {}.", err);
                         }
                     };
-                }
-            }
-            ToDelivery::FetchKeyPackage(from_id, ids) => {
-                println!(
-                    "[Delivery Service] received request to fetch key package of ids: {:?}",
-                    ids
-                );
-                let mut kps: HashMap<ClientId, KeyPackageBundle> = HashMap::new();
-                for id in ids {
-                    if let Some(key_packages) = ds_store.key_packages.get(&id.0).as_mut() {
-                        let key_package = key_packages
-                            .clone()
-                            .pop()
-                            .expect("Failed to get key package");
-                        kps.insert(id, key_package);
-                    }
-                }
-                for (id, handle) in data.clients.iter_mut() {
-                    let id = *id;
-
-                    // Notify to the client who sent it to us.
-                    if id == from_id {
-                        let msg = FromDelivery::SendKeyPackages(kps.clone());
-                        match handle.send(msg) {
-                            Ok(()) => {}
-                            Err(err) => {
-                                eprintln!("[Delivery Service] Something went wrong: {}.", err);
-                            }
-                        };
-                    }
-                }
-            }
-            ToDelivery::KeyPackage(from_id, key_package_bundle) => {
-                println!("[Delivery Service] received key package of: {:?}", from_id);
-                ds_store.add_key_package(from_id.0, key_package_bundle);
-                println!(
-                    "[Delivery Service] Total key packages is: {}",
-                    ds_store.key_packages.get(&from_id.0).unwrap().len()
-                );
-                // Iterate through clients so we can send the message.
-                for (id, handle) in data.clients.iter_mut() {
-                    let id = *id;
-
-                    // Notify to the client who sent it to us.
-                    if id == from_id {
-                        let msg =
-                            FromDelivery::Message(Vec::from("[Server] Key package received!"));
-                        match handle.send(msg) {
-                            Ok(()) => {}
-                            Err(err) => {
-                                eprintln!("[Delivery Service] Something went wrong: {}.", err);
-                            }
-                        };
-                    }
                 }
             }
             ToDelivery::FatalError(err) => return Err(err),

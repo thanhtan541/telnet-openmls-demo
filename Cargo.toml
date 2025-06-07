@@ -9,5 +9,17 @@ edition = "2021"
 [workspace.dependencies]
 # local crates
 crypto = { path = "./crates/openmls-group", version = "0.0.0" }
+serde = "1.0.219"
+serde_json = "1"
+openmls = { version = "0.6.0", features = ["test-utils"] }
+openmls_basic_credential = "0.3.0"
+openmls_traits = "0.3.0"
+openmls_rust_crypto = "0.3.0"
+openmls_memory_storage = { version = "0.3.0" }
+# Error handler
+thiserror = "1"
+anyhow = "1"
+tokio = { version = "1.41.0", features = ["full"] }
+tokio-util = { version = "0.7.12", features = ["codec"] }
 
 # non-local crates

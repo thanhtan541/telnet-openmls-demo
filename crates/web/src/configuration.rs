@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use secrecy::Secret;
 use serde_aux::field_attributes::deserialize_number_from_string;
