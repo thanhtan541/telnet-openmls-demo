@@ -1,7 +1,0 @@
-{
-  "crv": "P-256",
-  "kid": "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImlOMzd3dlpUeGw2TmIzdXpsNVQ0WHBuczY1NkE1V2EwUFRqSzczVE8wM1UiLCJ5IjoieU0yNG56T3hPenNvQVVES1JGVGVONzVCZHVZbWtCVlhvSFBpaG1MVEIxWSJ9#0",
-  "kty": "EC",
-  "x": "iN37wvZTxl6Nb3uzl5T4Xpns656A5Wa0PTjK73TO03U",
-  "y": "yM24nzOxOzsoAUDKRFTeN75BduYmkBVXoHPihmLTB1Y"
-}

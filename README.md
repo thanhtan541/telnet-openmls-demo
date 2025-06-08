@@ -28,3 +28,9 @@ Connect to Delivery Service
 ```bash
 $ telnet 127.0.0.1 3456
 ```
+
+Run Authentication Service - AS
+
+```bash
+$ cargo run -p web
+```
