@@ -5,7 +5,7 @@ use tracing_actix_web::TracingLogger;
 
 use crate::{
     configuration::Settings,
-    routes::{health_check, index, qr},
+    routes::{health_check, index, post_identities},
 };
 
 pub struct ApplicationBaseUrl(pub String);
@@ -54,7 +54,7 @@ async fn run(listener: TcpListener, base_url: String) -> Result<Server, anyhow::
             .wrap(cors)
             .service(index)
             .service(health_check)
-            .service(qr)
+            .service(post_identities)
             .app_data(base_url.clone())
     })
     .listen(listener)?

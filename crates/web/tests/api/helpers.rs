@@ -52,6 +52,14 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
     }
+
+    pub async fn post_identities(&self) -> reqwest::Response {
+        self.api_client
+            .post(&format!("{}/identities", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
